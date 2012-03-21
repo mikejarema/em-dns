@@ -69,8 +69,6 @@ module EventMachine
         end
       end
       def send_packet(pkt)
-        ns = nameserver
-        puts ns
         send_datagram(pkt, nameserver, 53)
       end
       def nameservers=(ns)
