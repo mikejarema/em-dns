@@ -7,8 +7,8 @@ module EventMachine
     # Global interface
     ##
 
-    def self.resolve(hostname)
-      Request.new(socket, hostname)
+    def self.resolve(hostname, resource = nil)
+      Request.new(socket, hostname, resource)
     end
 
     def self.socket
@@ -94,13 +94,14 @@ module EventMachine
       include Deferrable
       attr_accessor :retry_interval
       attr_accessor :max_tries
-      def initialize(socket, hostname)
+      def initialize(socket, hostname, resource = nil)
         @socket = socket
         @hostname = hostname
         @tries = 0
         @last_send = Time.at(0)
         @retry_interval = 3
         @max_tries = 5
+        @resource = resource || Resolv::DNS::Resource::IN::A
         EM.next_tick { tick }
       end
       def tick
@@ -117,9 +118,13 @@ module EventMachine
       def receive_answer(msg)
         addrs = []
         msg.each_answer do |name,ttl,data|
-          if data.kind_of?(Resolv::DNS::Resource::IN::A) ||
-              data.kind_of?(Resolv::DNS::Resource::IN::AAAA)
-            addrs << data.address.to_s
+          if @resource.nil?
+            if data.kind_of?(Resolv::DNS::Resource::IN::A) ||
+                data.kind_of?(Resolv::DNS::Resource::IN::AAAA)
+              addrs << data.address.to_s
+            end
+          elsif data.kind_of?(@resource)
+            addrs << data
           end
         end
         if addrs.empty?
@@ -148,7 +153,7 @@ module EventMachine
         msg = Resolv::DNS::Message.new
         msg.id = id
         msg.rd = 1
-        msg.add_question @hostname, Resolv::DNS::Resource::IN::A
+        msg.add_question @hostname, @resource
         msg
       end
     end
