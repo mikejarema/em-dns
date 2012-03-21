@@ -19,17 +19,25 @@ module EventMachine
     end
 
     def self.nameserver=(ns)
-      @nameserver = ns
+      @nameservers = [ns]
     end
     def self.nameserver
-      unless defined?(@nameserver)
+      self.nameservers.first
+    end
+
+    def self.nameservers=(ns)
+      @nameservers = ns
+    end
+    def self.nameservers
+      unless defined?(@nameservers)
+        @nameservers = []
         IO::readlines('/etc/resolv.conf').each do |line|
           if line =~ /^nameserver (.+)$/
-            @nameserver = $1.split(/\s+/).first
+            @nameservers << $1.split(/\s+/).first
           end
         end
       end
-      @nameserver
+      @nameservers
     end
 
     ##
@@ -61,13 +69,21 @@ module EventMachine
         end
       end
       def send_packet(pkt)
+        ns = nameserver
+        puts ns
         send_datagram(pkt, nameserver, 53)
       end
+      def nameservers=(ns)
+        @nameservers = ns
+      end
+      def nameservers
+        @nameservers ||= DnsResolver.nameservers
+      end
       def nameserver=(ns)
-        @nameserver = ns
+        @nameservers = [ns]
       end
       def nameserver
-        @nameserver ||= DnsResolver.nameserver
+        nameservers[rand(nameservers.size)] # Randomly select a nameserver
       end
       # Decodes the packet, looks for the request and passes the
       # response over to the requester
