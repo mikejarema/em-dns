@@ -22,7 +22,7 @@ module EventMachine
       @nameservers = [ns]
     end
     def self.nameserver
-      self.nameservers.first
+      self.nameservers[rand(self.nameservers.size)] # Randomly select a nameserver
     end
 
     def self.nameservers=(ns)
@@ -71,17 +71,8 @@ module EventMachine
       def send_packet(pkt)
         send_datagram(pkt, nameserver, 53)
       end
-      def nameservers=(ns)
-        @nameservers = ns
-      end
-      def nameservers
-        @nameservers ||= DnsResolver.nameservers
-      end
-      def nameserver=(ns)
-        @nameservers = [ns]
-      end
       def nameserver
-        nameservers[rand(nameservers.size)] # Randomly select a nameserver
+        DnsResolver.nameserver
       end
       # Decodes the packet, looks for the request and passes the
       # response over to the requester
