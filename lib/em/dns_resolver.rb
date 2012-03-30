@@ -18,6 +18,16 @@ module EventMachine
       @socket
     end
 
+    #
+    # IMPORTANT NOTE ON THE NAMESERVER API BELOW:
+    # ===========================================
+    # As the nameservers are set on the DnsResolver module, the variable
+    # value is the same across all threads. em-dns is a great fit for parallel
+    # programming, but beware that this nameserver API is NOT safe for parallel
+    # DNS resolution tasks. Consider passing in {:nameservers => [...]} to the
+    # DnsResolver.resolve method.
+    #
+
     def self.nameserver=(ns)
       @nameservers = [ns]
     end
@@ -70,20 +80,8 @@ module EventMachine
       end
       def send_packet(pkt, nameservers = nil)
         # Random nameserver, if nameservers passed
-        nameserver = nameservers ? nameservers[rand(nameservers.length)] : self.nameserver
+        nameserver = nameservers ? nameservers[rand(nameservers.length)] : DnsResolver.nameserver
         send_datagram(pkt, nameserver, 53)
-      end
-      def nameservers=(ns)
-        @nameservers = ns
-      end
-      def nameservers
-        @nameservers || DnsResolver.nameservers
-      end
-      def nameserver=(ns)
-        @nameservers = [ns]
-      end
-      def nameserver
-        nameservers[rand(nameservers.size)] # Randomly select a nameserver
       end
       # Decodes the packet, looks for the request and passes the
       # response over to the requester
