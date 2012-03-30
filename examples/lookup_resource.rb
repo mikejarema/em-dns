@@ -15,7 +15,7 @@ pending = hosts.size
 
 EM.run {
   hosts.each do |host|
-    df = EM::DnsResolver.resolve(host, eval("Resolv::DNS::Resource::IN::#{resource.upcase}"))
+    df = EM::DnsResolver.resolve(host, :resource => eval("Resolv::DNS::Resource::IN::#{resource.upcase}"))
     df.callback { |a|
       p host => a
       pending -= 1

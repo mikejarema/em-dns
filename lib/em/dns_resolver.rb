@@ -7,8 +7,8 @@ module EventMachine
     # Global interface
     ##
 
-    def self.resolve(hostname, resource = nil)
-      Request.new(socket, hostname, resource)
+    def self.resolve(hostname, options = {})
+      Request.new(socket, hostname, options)
     end
 
     def self.socket
@@ -108,14 +108,14 @@ module EventMachine
       include Deferrable
       attr_accessor :retry_interval
       attr_accessor :max_tries
-      def initialize(socket, hostname, resource = nil)
+      def initialize(socket, hostname, options = {})
         @socket = socket
         @hostname = hostname
         @tries = 0
         @last_send = Time.at(0)
         @retry_interval = 3
         @max_tries = 5
-        @resource = resource || Resolv::DNS::Resource::IN::A
+        @resource = options[:resource] || Resolv::DNS::Resource::IN::A
         EM.next_tick { tick }
       end
       def tick
