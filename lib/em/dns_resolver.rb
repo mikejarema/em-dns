@@ -68,7 +68,9 @@ module EventMachine
           @requests[id] = req
         end
       end
-      def send_packet(pkt)
+      def send_packet(pkt, nameservers = nil)
+        # Random nameserver, if nameservers passed
+        nameserver = nameservers ? nameservers[rand(nameservers.length)] : self.nameserver
         send_datagram(pkt, nameserver, 53)
       end
       def nameservers=(ns)
@@ -115,7 +117,11 @@ module EventMachine
         @last_send = Time.at(0)
         @retry_interval = 3
         @max_tries = 5
-        @resource = options[:resource] || Resolv::DNS::Resource::IN::A
+
+        # options parameters (all optional, defaults explicitly listed)
+        @resource =    options[:resource]     ||  Resolv::DNS::Resource::IN::A
+        @nameservers = options[:nameservers]  ||  nil
+
         EM.next_tick { tick }
       end
       def tick
@@ -149,7 +155,7 @@ module EventMachine
       end
       private
       def send
-        @socket.send_packet(packet.encode)
+        @socket.send_packet(packet.encode, @nameservers)
         @tries += 1
         @last_send = Time.now
       end
