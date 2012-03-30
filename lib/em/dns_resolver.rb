@@ -71,8 +71,17 @@ module EventMachine
       def send_packet(pkt)
         send_datagram(pkt, nameserver, 53)
       end
+      def nameservers=(ns)
+        @nameservers = ns
+      end
+      def nameservers
+        @nameservers || DnsResolver.nameservers
+      end
+      def nameserver=(ns)
+        @nameservers = [ns]
+      end
       def nameserver
-        DnsResolver.nameserver
+        nameservers[rand(nameservers.size)] # Randomly select a nameserver
       end
       # Decodes the packet, looks for the request and passes the
       # response over to the requester
