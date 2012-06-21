@@ -114,7 +114,7 @@ module EventMachine
         @tries = 0
         @last_send = Time.at(0)
         @retry_interval = 3
-        @max_tries = 5
+        @max_tries = 10
 
         # options parameters (all optional, defaults explicitly listed)
         @resource =    options[:resource]     ||  Resolv::DNS::Resource::IN::A
@@ -123,8 +123,9 @@ module EventMachine
         EM.next_tick { tick }
       end
       def tick
-        # Break early if nothing to do
-        return if @last_send + @retry_interval > Time.now
+        # Break early if nothing to do, retry interval is somewhat randomized
+        # to avoid stacking a ton of simultaneous retries.
+        return if @last_send + @retry_interval * rand > Time.now
 
         if @tries < @max_tries
           send
